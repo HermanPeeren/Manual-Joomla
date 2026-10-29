@@ -77,3 +77,13 @@
 .swagger-ui-page .swagger-ui .dialog-ux .modal-ux {
   z-index: calc(var(--ifm-z-index-fixed) + 1);
 }
+
+/* API reference page (src/pages/web-services-api/reference.js): keep Scalar's sidebar below the navbar. */
+.api-reference-page {
+  --scalar-custom-header-height: var(--ifm-navbar-height);
+}
+
+/* Scalar's advertisement for its commercial SDK generator has no configuration option. */
+.api-reference-page .explore-scalar {
+  display: none;
+}

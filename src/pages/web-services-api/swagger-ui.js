@@ -1,7 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import 'swagger-ui-dist/swagger-ui.css';
 
 // Swagger UI encodes path parameters, but with Apache's default AllowEncodedSlashes Off
 // a %2F in the path of /v1/media/files/{path} gives a 404 before Joomla is reached.
@@ -16,18 +15,19 @@ export default function SwaggerUiPage() {
   const container = useRef(null);
 
   useEffect(() => {
-    // The prebuilt bundle needs no Node polyfills in webpack; load it in the browser only.
-    import('swagger-ui-dist/swagger-ui-es-bundle.js').then(({default: SwaggerUIBundle}) => {
-      SwaggerUIBundle({
-        url: specUrl,
-        domNode: container.current,
-        docExpansion: 'none',
-        defaultModelsExpandDepth: -1,
-        deepLinking: true,
-        filter: true,
-        requestInterceptor: keepMediaPathSlashes,
+    // The prebuilt bundle needs no Node polyfills in webpack; load it (and its CSS) on this page only.
+    Promise.all([import('swagger-ui-dist/swagger-ui-es-bundle.js'), import('swagger-ui-dist/swagger-ui.css')])
+      .then(([{default: SwaggerUIBundle}]) => {
+        SwaggerUIBundle({
+          url: specUrl,
+          domNode: container.current,
+          docExpansion: 'none',
+          defaultModelsExpandDepth: -1,
+          deepLinking: true,
+          filter: true,
+          requestInterceptor: keepMediaPathSlashes,
+        });
       });
-    });
   }, [specUrl]);
 
   return (
