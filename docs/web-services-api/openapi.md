@@ -16,8 +16,10 @@ with server-side Joomla HTTPFactory and curl, and browser-side `Joomla.request` 
 
 ## Set the API address
 
-The specification uses the relative server URL `/api/index.php`. Set the site origin and include
-any Joomla installation subdirectory. Operation paths begin with `/v1`, producing URLs such as:
+The specification lists two servers. The first, `https://{site}/api/index.php`, has a `site` variable:
+set it to the domain of the target site and include any Joomla installation subdirectory, for example
+`example.org/joomla`. The second is the relative URL `/api/index.php`, for a viewer served from the site itself.
+Operation paths begin with `/v1`, producing URLs such as:
 
 ```text
 https://example.org/api/index.php/v1/content/articles
@@ -27,7 +29,8 @@ Use the API entry point for requests. Frontend menu aliases and SEF URLs do not 
 
 ## Read an operation
 
-1. Find the path and method, or filter by a tag such as `com_content`.
+1. Find the path and method, or filter by a resource tag such as `Content Articles`. `x-tagGroups` groups
+   the tags by component, such as `com_content`.
 2. Check authentication, path parameters and listed query parameters.
 3. Read `requestBody`: ordinary writes take flat JSON objects.
 4. Inspect the response schema; list, item, creation and action results can differ.
@@ -57,6 +60,10 @@ while plugin PATCH requests accept only `enabled`, `access` and `ordering`.
 
 Check the method as well as the path: access-level `rules` is an array for creation but a JSON-encoded array
 string for PATCH. The two bodies are not interchangeable.
+
+Some request bodies have two examples: `minimal` shows the smallest accepted body, `joomlaSite` a body with
+realistic values. Error responses and parameters used by many operations, such as `Id`, `PageOffset` and
+`PageLimit`, are defined once under `components` and referenced with `$ref`.
 
 ## Operation availability
 
