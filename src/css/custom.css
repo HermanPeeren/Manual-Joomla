@@ -64,3 +64,16 @@
 #JEDL_Footer_Link {
   color: var(--ifm-Footer-link-text-color);
 }
+
+/* Swagger UI page (src/pages/web-services-api/swagger-ui.js): Swagger UI has no dark theme,
+   so it keeps a light panel in dark mode, and its dialogs go above the navbar. */
+[data-theme='dark'] .swagger-ui-page .swagger-ui {
+  background: #fff;
+  border-radius: var(--ifm-global-radius);
+  padding: 0 1rem 1rem;
+}
+
+.swagger-ui-page .swagger-ui .dialog-ux .backdrop-ux,
+.swagger-ui-page .swagger-ui .dialog-ux .modal-ux {
+  z-index: calc(var(--ifm-z-index-fixed) + 1);
+}

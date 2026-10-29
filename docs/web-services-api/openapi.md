@@ -11,7 +11,9 @@ Web Services API in OpenAPI 3.1 format. It includes routes, authentication, path
 request and response schemas, and parameter options for core extensions.
 
 Import the specification into an OpenAPI-compatible client or open it in a viewer to explore operations
-and their data structures. The [component guides](./index.md#core-components) explain how to use the endpoints
+and their data structures. This manual shows it in two viewers: the [API reference](/web-services-api/reference/)
+(Scalar) and [Swagger UI](/web-services-api/swagger-ui/). Both can send requests to your own site; see
+[Try requests from a viewer](#try-requests-from-a-viewer). The [component guides](./index.md#core-components) explain how to use the endpoints
 with server-side Joomla HTTPFactory and curl, and browser-side `Joomla.request` and native `fetch()`.
 
 ## Set the API address
@@ -33,6 +35,16 @@ The specification offers three alternative security schemes: `BearerAuth` (the A
 `Authorization: Bearer <token>`), `JoomlaToken` (the same token in `X-Joomla-Token`) and `BasicAuth` (username and
 password, only when the Basic Auth plugin is enabled). The Joomla Update operations use `JUpdateToken` instead.
 In an OpenAPI viewer, enter the token for one of the token schemes.
+
+## Try requests from a viewer
+
+Select the first server, set `site` to the domain of your site (with its folder, if any) and `scheme` to `https`,
+or `http` for a local test site. Enter the API token for `BearerAuth`. Use a test site: requests change real data.
+
+The viewer runs on this manual's domain, so the browser sends cross-origin requests. In the Global
+Configuration of the site, set *Enable CORS* to Yes (Server tab, Web Services). Without it, the browser's
+preflight request fails. With the default settings, each route allows its own methods and the
+`Authorization` header. To allow only this manual, set *Access-Control-Allow-Origin* to `https://manual.joomla.org`.
 
 ## Read an operation
 

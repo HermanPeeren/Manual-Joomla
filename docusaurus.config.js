@@ -314,6 +314,27 @@ const config = {
       },
     ],
     [
+      '@scalar/docusaurus',
+      {
+        id: 'web-services-api',
+        label: 'Web Services API',
+        route: '/web-services-api/reference',
+        showNavLink: false,
+        // Without this the plugin loads the latest, unpinned @scalar/api-reference from jsDelivr.
+        cdn: 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.74.0',
+        configuration: {
+          url: '/openapi/joomla-6.2.0.json',
+          hideModels: true,
+          defaultOpenFirstTag: false,
+          showDeveloperTools: 'never',
+          agent: {disabled: true},
+          authentication: {
+            preferredSecurityScheme: 'BearerAuth',
+          },
+        },
+      },
+    ],
+    [
       require.resolve("@cmfcmf/docusaurus-search-local"),
       {
         indexBlog: false,
