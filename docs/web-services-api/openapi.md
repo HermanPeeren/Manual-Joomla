@@ -16,9 +16,9 @@ with server-side Joomla HTTPFactory and curl, and browser-side `Joomla.request` 
 
 ## Set the API address
 
-The specification lists two servers. The first, `https://{site}/api/index.php`, has a `site` variable:
+The specification lists two servers. The first, `{scheme}://{site}/api/index.php`, has a `site` variable:
 set it to the domain of the target site and include any Joomla installation subdirectory, for example
-`example.org/joomla`. The second is the relative URL `/api/index.php`, for a viewer served from the site itself.
+`example.org/joomla`. Its `scheme` variable is `https`, or `http` for a local test site. The second is the relative URL `/api/index.php`, for a viewer served from the site itself.
 Operation paths begin with `/v1`, producing URLs such as:
 
 ```text
