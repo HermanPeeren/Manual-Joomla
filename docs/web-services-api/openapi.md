@@ -27,6 +27,13 @@ https://example.org/api/index.php/v1/content/articles
 
 Use the API entry point for requests. Frontend menu aliases and SEF URLs do not identify API resources.
 
+## Authentication in the specification
+
+The specification offers three alternative security schemes: `BearerAuth` (the API token as
+`Authorization: Bearer <token>`), `JoomlaToken` (the same token in `X-Joomla-Token`) and `BasicAuth` (username and
+password, only when the Basic Auth plugin is enabled). The Joomla Update operations use `JUpdateToken` instead.
+In an OpenAPI viewer, enter the token for one of the token schemes.
+
 ## Read an operation
 
 1. Find the path and method, or filter by a resource tag such as `Content Articles`. `x-tagGroups` groups

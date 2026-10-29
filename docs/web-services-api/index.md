@@ -42,7 +42,8 @@ its group settings; if a request is refused, also check Global Configuration per
 **API Authentication - Web Services Basic Auth** is disabled by default. Username/password authentication only works when
 this plugin is explicitly enabled. The token examples below use the token plugins and do not require Basic Auth.
 
-Use `X-Joomla-Token` for ordinary token-authenticated routes.
+Use `X-Joomla-Token` for ordinary token-authenticated routes. The token plugin also accepts the same token as
+`Authorization: Bearer <token>`; it reads that header first and `X-Joomla-Token` only when it is absent.
 The [Joomla Update API](./components/joomlaupdate.md) has its own `X-JUpdate-Token` protocol.
 
 The base URL includes the API entry point:

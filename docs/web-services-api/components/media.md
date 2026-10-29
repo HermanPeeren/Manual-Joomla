@@ -142,7 +142,10 @@ HTTP `200 OK`, with `Content-Type: application/vnd.api+json`. The response excer
 }
 ```
 
-Read `GET /media/files/local-images:/api-example` for the created item; add the trailing slash to list its contents. URL-encode segments containing reserved characters.
+Read `GET /media/files/local-images:/api-example` for the created item; add the trailing slash to list its contents. URL-encode segments containing reserved characters, but not the
+slashes between them: with Apache's default `AllowEncodedSlashes Off`, a `%2F` in the URL path returns a 404 from
+the web server before Joomla is reached. `GET /media/files?path=local-images:/api-example/` lists the same folder
+through a query parameter, where encoded slashes do work.
 
 ## Frontend browser requests
 
