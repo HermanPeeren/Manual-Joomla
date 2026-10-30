@@ -168,7 +168,7 @@ const config = {
     ],
   ],
 
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-openapi-docs'],
   themeConfig:
   /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -299,6 +299,13 @@ const config = {
         darkTheme: darkCodeTheme,
         additionalLanguages: ['php', 'ini', 'json'],
       },
+      // Code samples on the generated API reference pages (docusaurus-theme-openapi-docs)
+      languageTabs: [
+        {highlight: 'php', language: 'php', logoClass: 'php', variant: 'guzzle'},
+        {highlight: 'bash', language: 'curl', logoClass: 'curl'},
+        {highlight: 'javascript', language: 'javascript', logoClass: 'javascript', variant: 'fetch'},
+        {highlight: 'python', language: 'python', logoClass: 'python', variant: 'requests'},
+      ],
     }),
   plugins: [
     [
@@ -340,6 +347,55 @@ const config = {
         showLastUpdateAuthor: true,
         showLastUpdateTime: true,
       }),
+    ],
+    // Stoplight Elements runs in an iframe (src/pages/web-services-api/elements.js) with its own copy of its files.
+    () => ({
+      name: 'stoplight-elements-files',
+      loadContent() {
+        const fs = require('fs');
+        const path = require('path');
+        const target = path.join(__dirname, 'static', 'vendor', 'stoplight-elements');
+        fs.mkdirSync(target, {recursive: true});
+        for (const file of ['web-components.min.js', 'styles.min.css']) {
+          fs.copyFileSync(require.resolve(`@stoplight/elements/${file}`), path.join(target, file));
+        }
+      },
+    }),
+    // The code samples of docusaurus-theme-openapi-docs import Node's 'path' module.
+    () => ({
+      name: 'webpack-path-fallback',
+      configureWebpack: () => ({resolve: {fallback: {path: require.resolve('path-browserify')}}}),
+    }),
+    [
+      // Pages per operation of the Web Services API, generated from static/openapi/joomla-6.2.0.json
+      // with `npx docusaurus gen-api-docs all` into api-reference/ (not committed).
+      'content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      ({
+        id: 'api-reference',
+        path: 'api-reference',
+        routeBasePath: 'api-reference',
+        sidebarPath: require.resolve('./sidebarsApiReference.js'),
+        docItemComponent: '@theme/ApiItem',
+      }),
+    ],
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'openapi',
+        docsPluginId: 'api-reference',
+        config: {
+          joomla: {
+            specPath: 'static/openapi/joomla-6.2.0.json',
+            outputDir: 'api-reference',
+            downloadUrl: '/openapi/joomla-6.2.0.json',
+            sidebarOptions: {
+              groupPathsBy: 'tagGroup',
+              categoryLinkSource: 'tag',
+            },
+          },
+        },
+      },
     ],
     [
       'content-docs',
