@@ -13,12 +13,19 @@ classic.docs.onlyIncludeVersions = ['current'];
 classic.docs.lastVersion = 'current';
 classic.docs.versions = {current: classic.docs.versions.current};
 
+const openapi = config.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === 'docusaurus-plugin-openapi-docs');
+openapi[1].config.joomla.downloadUrl = config.baseUrl + 'openapi/joomla-6.2.0.json';
+
+const link = (path, text) => '<a href="' + config.baseUrl + path + '">' + text + '</a>';
 config.themeConfig.announcementBar = {
   id: 'api-reference-demo',
-  content: 'Demo of a Web Services API reference for the Joomla Manual, not the official Manual: '
-    + '<a href="https://manual.joomla.org">manual.joomla.org</a>. '
-    + 'See the <a href="' + config.baseUrl + 'web-services-api/reference/">API reference (Scalar)</a> '
-    + 'and <a href="' + config.baseUrl + 'web-services-api/swagger-ui/">Swagger UI</a>.',
+  content: 'Demo for the Joomla Manual, not the official Manual (<a href="https://manual.joomla.org">manual.joomla.org</a>). '
+    + 'Web Services API in: '
+    + link('api-reference/joomla-6-2-0-core-web-services-api', 'pages per operation') + ' · '
+    + link('web-services-api/reference/', 'Scalar') + ' · '
+    + link('web-services-api/elements/', 'Stoplight Elements') + ' · '
+    + link('web-services-api/swagger-ui/', 'Swagger UI') + '. '
+    + 'Proposal: ' + link('docs/general-concepts/webservices', 'General Concepts: Web Services') + '.',
   isCloseable: false,
 };
 

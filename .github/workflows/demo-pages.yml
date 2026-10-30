@@ -26,6 +26,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npx docusaurus gen-api-docs all
       - id: pages
         uses: actions/configure-pages@v5
       - run: npx docusaurus build --config docusaurus.demo.config.js
