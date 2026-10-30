@@ -15,6 +15,10 @@ A frontend application using these endpoints must deliberately handle publicatio
 languages and workflows. Authenticated lists can include data that a site visitor cannot see.
 Keep privileged API tokens on the server; do not embed them in public JavaScript.
 
+This section is the reference for the core endpoints and how to call them. How the web services work (the API
+application, routes from plugins, authentication) and how to use them in your own extension is explained in
+[General Concepts: Web Services](../general-concepts/webservices.md).
+
 Start with the [component articles](#core-components) for practical requests, forms, responses and errors,
 or download the [complete OpenAPI specification](./openapi.md).
 For your own routes, see the existing [JSON response tutorial](./json-response-format/index.md).

@@ -1,407 +1,155 @@
 Web Services
 ============
 
-Description of the webservices concept
+Joomla has a REST API: other systems can read and change the content and configuration of a Joomla site over
+HTTP. This page explains the concepts behind it and how to use it in your own extension.
 
-- Web Services are used to make systems COMMUNICATE each other by using the HTTP protocol and nowadays over TLS (Transport Layer Security).
-- Another definition could be Web Services acts like a CONTRACT between a PRODUCER and a CONSUMER via ENDPOINTS.
-- Simply put, Web Services are like doors and windows in a house, they are INPUTS and OUTPUTS to the OUTSIDE world.
-- In the context on Joomla! as a system, Joomla Webservices API allows Joomla! to INTERACT WITH, EXTERNAL DATASOURCES. Like webapps, mobile,etc...
+:::tip[Concepts here, endpoints in the Web Services API section]
 
-## Communicate with the Joomla 4.x Web Services API
-The communication with Joomla's Web Services API takes place via specified endpoints.
+This page is about how Joomla's web services work. For the endpoints of the core components, their requests and
+responses, authentication details and complete client examples, see the [Web Services API](../web-services-api/index.md)
+section and its [OpenAPI reference](../web-services-api/openapi.md).
 
-- Joomla's core endpoints: https://docs.joomla.org/J4.x:Joomla_Core_APIs
-- A collection of Joomla endpoints to use in Postman: https://github.com/alexandreelise/j4x-api-collection
+:::
 
-### Using the Joomla framework
+## The API application
 
-More often than not, when using the Joomla framework, under the hood it still uses cURL or php streams. Most of the cURL is available with your web hosting provider. Otherwise check phpinfo();
-You should be able to follow along because the examples using the Joomla framework will mimic those with cURL.
+Next to the site and the administrator application, Joomla has a third application: the API application. Its
+entry point is `/api/index.php`, and its client name is `api`, so `$app->isClient('api')` is true during an API
+request. It has no templates, menu items or SEF URLs. A request goes to a versioned path:
 
-#### Define some variables
-First we define some variables that we use in all our cURL requests:
-- the URL of your Joomla 4.x website and
-- the Joomla's API Token of a Super User account or an account which has at least core.login.api permission and core.login.site to be able to see change current logged-in user's token.
+```text
+https://example.org/api/index.php/v1/content/articles
+```
 
+Requests send JSON. Responses use the [JSON:API](https://jsonapi.org) format with the media type
+`application/vnd.api+json`. The API application checks the `Accept` header of the request; when it cannot
+serve any of the requested media types, it answers with HTTP 406. See
+[JSON response format](../web-services-api/json-response-format/index.md).
+
+## Routes come from plugins
+
+There is no fixed list of endpoints: plugins of the group `webservices` add routes to the API router when the
+`onBeforeApiRoute` event is triggered. Each core component has such a plugin, for example
+*Web Services - Content*. When the plugin is disabled, its routes do not exist and requests get HTTP 404.
+
+Most plugins use `ApiRouter::createCRUDRoutes()`, which adds five routes for one resource:
+
+| Method | Route | Controller task |
+|--------|-------|-----------------|
+| GET | `v1/content/articles` | `articles.displayList` |
+| GET | `v1/content/articles/:id` | `articles.displayItem` |
+| POST | `v1/content/articles` | `articles.add` |
+| PATCH | `v1/content/articles/:id` | `articles.edit` |
+| DELETE | `v1/content/articles/:id` | `articles.delete` |
 
 ```php
-// Before passing the HTTP METHOD to CURL
+public function onBeforeApiRoute(BeforeApiRouteEvent $event): void
+{
+    $event->getRouter()->createCRUDRoutes(
+        'v1/content/articles',
+        'articles',
+        ['component' => 'com_content']
+    );
+}
+```
+
+The third argument holds route defaults, such as the component that handles the request. With a fourth argument
+`true`, the GET routes are public: they can be used without authentication.
+
+## Controllers, views and models
+
+A route points to a controller of the component in `api/components/com_example/src`:
+
+- the controller extends `Joomla\CMS\MVC\Controller\ApiController`, which has the tasks `displayList`,
+  `displayItem`, `add`, `edit` and `delete`;
+- the view extends `Joomla\CMS\MVC\View\JsonApiView`; its `$fieldsToRenderList` and `$fieldsToRenderItem`
+  decide which fields a response contains.
+
+The API has no models of its own: it uses the administrator models, forms and tables of the component. So an
+API request is validated, checked and saved in the same way as when you edit the item in the administrator, and
+the same events are triggered: content, fields and action log plugins also run on API requests.
+
+## Authentication and permissions
+
+A request to a route that is not public must be authenticated. Plugins of the group `api-authentication` do this:
+
+- *API Authentication - Web Services Joomla Token* accepts the API token of a user, as `Authorization: Bearer`
+  header or `X-Joomla-Token` header. Users find their token in their profile, if the plugin
+  *User - Joomla API Token* allows it for their user group (by default only Super Users).
+- *API Authentication - Web Services Basic Auth* accepts a username and password. It is disabled by default.
+
+The user must have the *Web Services Login* permission (`core.login.api`). After that, the normal permissions
+of the component apply, just as in the administrator: for example `core.create` to add an article.
+
+Browser scripts on another domain also need Cross-Origin Resource Sharing (CORS): see *Web Services* on the
+*Server* tab of the Global Configuration.
+
+## Using web services in your own extension
+
+### Within the same site: use the models
+
+Your extension does not need the web services to work with data of the site it runs on. Use the models of the
+component directly; then there is no HTTP request, no token and no JSON:
+
+```php
+$model = $this->getApplication()->bootComponent('com_content')
+    ->getMVCFactory()
+    ->createModel('Article', 'Administrator', ['ignore_request' => true]);
+
+$article = $model->getItem(1);
+```
+
+### Another site or system: call the API
+
+Use the web services to work with another Joomla site, for example to synchronise articles or users between two
+sites. In PHP, use Joomla's HTTP package rather than the PHP cURL functions:
+
+```php
 use Joomla\Http\HttpFactory;
-use Joomla\Uri\Uri;
 
-$http = (new HttpFactory())->getAvailableDriver();
-$url   = 'https://example.org/api/index.php/v1';
-$uri  = new Uri($url);
-
-// Put your Joomla! Api token in a safe place, for example a password manager or a vault storing secrets
-// We should not use environment variables to store secrets.
-// Here is why: https://www.trendmicro.com/en_us/research/22/h/analyzing-hidden-danger-of-environment-variables-for-keeping-secrets.html
-
-$token = '';
-```
-
-
-#### POST - Create an Article in the Category "Uncategorized" (Category ID = 2)
-
-```php
-$categoryId = 2; // Joomla's default "Uncategorized" Category
-
-$data = [
-'title'       => 'How to add an article to Joomla via the API?',
-'alias'       => 'how-to-add-article-via-joomla-api',
-'articletext' => 'I have no idea...',
-'catid'       => $categoryId,
-'language'    => '*',
-'metadesc'    => '',
-'metakey'     => '',
-];
-
-$dataString = json_encode($data);
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-'Content-Length: ' . mb_strlen($dataString),
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-// Timeout in seconds
-$timeout = 30;
-
-// Set path for creating an article it will set the current uri path part
-$uri->setPath('content/articles');
-
-// Will be a PSR-7 compatible Response
-$response = $http->request('POST', $uri, $dataString, $headers, $timeout);
-
-// The response body is now a stream, so you need to do
-echo $response->body;
-
-```
-
-#### GET - Retrieve all articles from the "Uncategorized" Category
-
-```php
-$categoryId = 2; // Joomla's default "Uncategorized" Category
-
-// Don't send payload to server
-$dataString = null;
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-// Timeout in seconds
-$timeout = 30;
-
-// Set path for getting all articles it will set the current uri path part
-$uri->setPath('content/articles');
-
-// Will be a PSR-7 compatible Response
-$response = $http->request('GET', $uri, $dataString, $headers, $timeout);
-
-// The response body is now a stream, so you need to do
-echo $response->body;
-
-```
-
-#### GET - Retrieve one specific Article
-
-```php
-$articleId = 1; // The Article ID of a specific Article
-
-// Don't send payload to server
-$dataString = null;
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-// Timeout in seconds
-$timeout = 30;
-
-// Set path for getting a specific article it will set the current uri path part
-$uri->setPath(sprintf('content/articles/%d', $articleId));
-
-// Will be a PSR-7 compatible Response
-$response = $http->request('GET', $uri, $dataString, $headers, $timeout);
-
-// The response body is now a stream, so you need to do
-echo $response->body;
-
-```
-
-#### PATCH - Modify a specific Article
-
-```php
-$articleId = 1; // The Article ID of a specific Article
-
-$data = [
-'id'          => $articleId,
-'title'       => 'How to add an article via the Joomla 4 API?',
-'introtext'   => 'When using PATCH, articletext MUST be split into two parts or use at least just introtext in order to work properly',
-'fulltext'    => 'MORE CONTENT if you wish',
-];
-
-$dataString = json_encode($data);
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-'Content-Length: ' . mb_strlen($dataString),
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-// Timeout in seconds
-$timeout = 30;
-
-// Set path for partial update of a specific article it will set the current uri path part
-$uri->setPath(sprintf('content/articles/%d', $articleId));
-
-// Will be a PSR-7 compatible Response
-$response = $http->request('PATCH', $uri, $dataString, $headers, $timeout);
-
-// show response status code
-echo $response->code;
-
-```
-
-#### DELETE - Remove a specific Article
-
-```php
-$articleId = 1; // The Article ID of a specific Article
-
-// Don't send payload to server
-$dataString = null;
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-// Timeout in seconds
-$timeout = 30;
-
-// Set path for deleting of a specific article it will set the current uri path part
-$uri->setPath(sprintf('content/articles/%d', $articleId));
-
-// Will be a PSR-7 compatible Response
-$response = $http->request('DELETE', $uri, $dataString, $headers, $timeout);
-
-// show response status code
-echo $response->code;
-```
-
-
-### Using the PHP cURL Functions
-
-The cURL functions needs to be available and enabled in your PHP configuration, check phpinfo();
-
-#### Define some variables
-
-First we define some variables that we use in all our cURL requests:
-
-- the URL of your Joomla 4.x website and
-- the Joomla's API Token of a Super User account or an account which has at least core.login.api permission and core.login.site to be able to see change current logged-in user's token.
-
-```php
-// Before passing the HTTP METHOD to CURL
-$curl  = curl_init();
-
-$url   = 'https://example.org/api/index.php/v1';
-
-// Put your Joomla! Api token in a safe place, for example a password manager or a vault storing secrets
-// We should not use environment variables to store secrets.
-// Here is why: https://www.trendmicro.com/en_us/research/22/h/analyzing-hidden-danger-of-environment-variables-for-keeping-secrets.html
-$token = '';
-```
-
-#### POST - Create an Article in the Category "Uncategorized" (Category ID = 2)
-
-```php
-$categoryId = 2; // Joomla's default "Uncategorized" Category
-
-
-$data = [
-'title'       => 'How to add an article to Joomla via the API?',
-'alias'       => 'how-to-add-article-via-joomla-api',
-'articletext' => 'I have no idea...',
-'catid'       => $categoryId,
-'language'    => '*',
-'metadesc'    => '',
-'metakey'     => '',
-];
-
-$dataString = json_encode($data);
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-'Content-Length: ' . mb_strlen($dataString),
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-curl_setopt_array($curl, [
-		CURLOPT_URL            => sprintf('%s/%s',$url,'content/articles'),
-		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_ENCODING       => 'utf-8',
-		CURLOPT_MAXREDIRS      => 10,
-		CURLOPT_TIMEOUT        => 30,
-		CURLOPT_FOLLOWLOCATION => true,
-		CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-		CURLOPT_CUSTOMREQUEST  => 'POST',
-		CURLOPT_POSTFIELDS     => $dataString,
-		CURLOPT_HTTPHEADER     => $headers,
-	]
+$http     = (new HttpFactory())->getHttp();
+$response = $http->get(
+    'https://example.org/api/index.php/v1/content/articles',
+    [
+        'Accept'        => 'application/vnd.api+json',
+        'Authorization' => 'Bearer ' . $token,
+    ]
 );
 
-$response = curl_exec($curl);
-curl_close($curl);
-echo $response;
+$articles = json_decode((string) $response->getBody(), true)['data'];
 ```
 
-#### GET - Retrieve all articles from the "Uncategorized" Category
+Keep the token of the other site out of your code and repository, for example in a parameter of your extension.
+The [component guides](../web-services-api/index.md) of the Web Services API section have complete examples
+for every endpoint, with error handling, and examples for browser scripts with `Joomla.request()` and `fetch()`.
 
-```php
-$categoryId = 2; // Joomla's default "Uncategorized" Category
+### React to API requests
 
+Your plugins also run during API requests. Use `$this->getApplication()->isClient('api')` when a plugin must
+behave differently, for example when it changes HTML output that an API client does not need. The API
+application triggers two events of its own: `onBeforeApiRoute`, to add routes, and `onAfterApiRoute`, after the
+route has been found.
 
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
+### Add routes to a core component
 
-curl_setopt_array($curl, [
-		CURLOPT_URL            => sprintf('%s/content/articles?filter[category]=%d',$url,$categoryId),
-		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_ENCODING       => 'utf-8',
-		CURLOPT_MAXREDIRS      => 10,
-		CURLOPT_TIMEOUT        => 30,
-		CURLOPT_FOLLOWLOCATION => true,
-		CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-		CURLOPT_CUSTOMREQUEST  => 'GET',
-		CURLOPT_HTTPHEADER     => $headers,
-	]
-);
+A `webservices` plugin can also add routes that are handled by your own component, next to the core routes.
+Which endpoints exist depends on the installed and enabled plugins, so describe your own routes in your
+documentation; the core [OpenAPI specification](../web-services-api/openapi.md) only covers Joomla core.
 
-$response = curl_exec($curl);
-curl_close($curl);
-echo $response;
-```
+## Add web services to your own component
 
-#### GET - Retrieve one specific Article
+To give your own component an API, it needs:
 
-```php
-$articleId = 1; // The Article ID of a specific Article
+- an `api` folder with an API controller and a JSON:API view, installed by the `<api>` section of the component
+  manifest into `api/components/com_example`;
+- a `webservices` plugin that adds the routes of your component in `onBeforeApiRoute`.
 
+The [component development tutorial](../building-extensions/components/component-development-tutorial/index.md)
+is the place for a step-by-step example.
 
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-curl_setopt_array($curl, [
-		CURLOPT_URL            => sprintf('%s/content/articles/%d',$url,$articleId),
-		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_ENCODING       => 'utf-8',
-		CURLOPT_MAXREDIRS      => 10,
-		CURLOPT_TIMEOUT        => 30,
-		CURLOPT_FOLLOWLOCATION => true,
-		CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-		CURLOPT_CUSTOMREQUEST  => 'GET',
-		CURLOPT_HTTPHEADER     => $headers,
-	]
-);
+## See also
 
-$response = curl_exec($curl);
-curl_close($curl);
-echo $response;
-```
-
-#### PATCH - Modify a specific Article
-
-```php
-$articleId = 1; // The Article ID of a specific Article
-
-
-$data = [
-'id'          => $articleId,
-'title'       => 'How to add an article via the Joomla 4 API?',
-'introtext'   => 'When using PATCH, articletext MUST be split into two parts or use at least just introtext in order to work properly',
-'fulltext'    => 'MORE CONTENT if you wish',
-];
-
-$dataString = json_encode($data);
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-'Content-Length: ' . mb_strlen($dataString),
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-curl_setopt_array($curl, [
-		CURLOPT_URL            => sprintf('%s/content/articles/%d',$url,$articleId),
-		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_ENCODING       => 'utf-8',
-		CURLOPT_MAXREDIRS      => 10,
-		CURLOPT_TIMEOUT        => 30,
-		CURLOPT_FOLLOWLOCATION => true,
-		CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-		CURLOPT_CUSTOMREQUEST  => 'PATCH',
-		CURLOPT_POSTFIELDS     => $dataString,
-		CURLOPT_HTTPHEADER     => $headers,
-	]
-);
-
-$response = curl_exec($curl);
-curl_close($curl);
-echo $response;
-```
-
-#### DELETE - Remove a specific Article
-
-```php
-$articleId = 1; // The Article ID of a specific Article
-
-
-// HTTP request headers
-$headers = [
-'Accept: application/vnd.api+json',
-'Content-Type: application/json',
-sprintf('X-Joomla-Token: %s', trim($token)),
-];
-
-curl_setopt_array($curl, [
-		CURLOPT_URL            => sprintf('%s/content/articles/%d',$url,$articleId),
-		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_ENCODING       => 'utf-8',
-		CURLOPT_MAXREDIRS      => 10,
-		CURLOPT_TIMEOUT        => 30,
-		CURLOPT_FOLLOWLOCATION => true,
-		CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-		CURLOPT_CUSTOMREQUEST  => 'DELETE',
-		CURLOPT_HTTPHEADER     => $headers,
-	]
-);
-
-$response = curl_exec($curl);
-curl_close($curl);
-echo $response;
-```
+- [Web Services API](../web-services-api/index.md): introduction, authentication and the guides per core component
+- [OpenAPI reference](../web-services-api/openapi.md): the complete specification of the core endpoints
+- [JSON response format](../web-services-api/json-response-format/index.md)
