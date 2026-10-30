@@ -1,0 +1,47 @@
+# Publishes the demo of the Web Services API reference on GitHub Pages.
+# Only runs for the demo/api-reference branch of this fork.
+name: Demo on GitHub Pages
+
+on:
+  push:
+    branches: [demo/api-reference]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - id: pages
+        uses: actions/configure-pages@v5
+      - run: npx docusaurus build --config docusaurus.demo.config.js
+        env:
+          DEMO_URL: ${{ steps.pages.outputs.origin }}
+          DEMO_BASE_URL: ${{ steps.pages.outputs.base_path }}/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
