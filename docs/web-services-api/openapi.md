@@ -11,8 +11,10 @@ Web Services API in OpenAPI 3.1 format. It includes routes, authentication, path
 request and response schemas, and parameter options for core extensions.
 
 Import the specification into an OpenAPI-compatible client or open it in a viewer to explore operations
-and their data structures. This manual shows it in two viewers: the [API reference](/web-services-api/reference/)
-(Scalar) and [Swagger UI](/web-services-api/swagger-ui/). Both can send requests to your own site; see
+and their data structures. This demo shows it in four ways: [a page per operation](/api-reference/joomla-6-2-0-core-web-services-api)
+(docusaurus-openapi-docs), the [API reference](/web-services-api/reference/) (Scalar),
+[Stoplight Elements](/web-services-api/elements/) and [Swagger UI](/web-services-api/swagger-ui/). All can send
+requests to your own site; see
 [Try requests from a viewer](#try-requests-from-a-viewer). The [component guides](./index.md#core-components) explain how to use the endpoints
 with server-side Joomla HTTPFactory and curl, and browser-side `Joomla.request` and native `fetch()`.
 
