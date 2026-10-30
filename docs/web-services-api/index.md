@@ -1,6 +1,5 @@
 ---
 title: Web Services API
-sidebar_position: 1
 ---
 
 Web Services API
