@@ -23434,7 +23434,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-Joomla-Token",
-        "description": "The same API token in the `X-Joomla-Token` header. Joomla reads this header only when there is no `Authorization: Bearer` header."
+        "description": "The same API token in the `X-Joomla-Token` header. Joomla tries to extract a Bearer token first and reads this header when the extracted token is empty. A non-empty Bearer token takes precedence even when authentication fails."
       },
       "BasicAuth": {
         "type": "http",
@@ -87435,10 +87435,14 @@
                         },
                         {
                           "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
                         }
                       ],
-                      "description": "Numeric model value: integer or a numeric string from the database driver; null when absent.",
-                      "x-type-origin": "numeric model/view alias"
+                      "description": "File size in bytes. The core local filesystem adapter returns an empty string for directories.",
+                      "x-type-origin": "filesystem adapter metadata"
                     },
                     "mime_type": {
                       "type": [
@@ -87640,10 +87644,14 @@
                       },
                       {
                         "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
                       }
                     ],
-                    "description": "Numeric model value: integer or a numeric string from the database driver; null when absent.",
-                    "x-type-origin": "numeric model/view alias"
+                    "description": "File size in bytes. The core local filesystem adapter returns an empty string for directories.",
+                    "x-type-origin": "filesystem adapter metadata"
                   },
                   "mime_type": {
                     "type": [
