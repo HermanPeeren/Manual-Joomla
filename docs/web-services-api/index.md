@@ -46,7 +46,8 @@ its group settings; if a request is refused, also check Global Configuration per
 this plugin is explicitly enabled. The token examples below use the token plugins and do not require Basic Auth.
 
 Use `X-Joomla-Token` for ordinary token-authenticated routes. The token plugin also accepts the same token as
-`Authorization: Bearer <token>`; it reads that header first and `X-Joomla-Token` only when it is absent.
+`Authorization: Bearer <token>`. It tries to extract a Bearer token first and falls back to `X-Joomla-Token`
+when the extracted token is empty. A non-empty Bearer token takes precedence even when authentication fails.
 The [Joomla Update API](./components/joomlaupdate.md) has its own `X-JUpdate-Token` protocol.
 
 The base URL includes the API entry point:
