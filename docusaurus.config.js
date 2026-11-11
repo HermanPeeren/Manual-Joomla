@@ -299,13 +299,29 @@ const config = {
         darkTheme: darkCodeTheme,
         additionalLanguages: ['php', 'ini', 'json'],
       },
-      // Code samples on the generated API reference pages (docusaurus-theme-openapi-docs). The Joomla samples
-      // (x-codeSamples, see scripts/openapi-code-samples.js) are shown first under PHP and JavaScript.
+      // Code samples on the generated API reference pages: one row of tabs per language, in this order. A tab is a
+      // code sample of the specification (x-codeSamples, see scripts/openapi-code-samples.js) or a variant generated
+      // by postman-code-generators. See src/theme/ApiExplorer/CodeSnippets/index.js.
       languageTabs: [
-        {highlight: 'bash', language: 'curl', logoClass: 'curl'},
-        {highlight: 'php', language: 'php', logoClass: 'php', variant: 'guzzle', variants: ['guzzle']},
-        {highlight: 'javascript', language: 'javascript', logoClass: 'javascript', variant: 'fetch', variants: ['fetch']},
-        {highlight: 'python', language: 'python', logoClass: 'python', variant: 'requests', variants: ['requests']},
+        {
+          language: 'php', label: 'PHP', highlight: 'php', logoClass: 'php',
+          tabs: [
+            {sample: 'Joomla HttpFactory'},
+            {sample: 'WordPress'},
+            {sample: 'Drupal'},
+            {sample: 'TYPO3'},
+            {variant: 'curl', label: 'cURL'},
+          ],
+        },
+        {
+          language: 'javascript', label: 'JavaScript', highlight: 'javascript', logoClass: 'javascript',
+          tabs: [{variant: 'fetch', label: 'fetch()'}, {sample: 'Joomla.request'}],
+        },
+        {language: 'curl', label: 'curl', highlight: 'bash', logoClass: 'curl', tabs: [{variant: 'curl', label: 'curl'}]},
+        {
+          language: 'python', label: 'Python', highlight: 'python', logoClass: 'python',
+          tabs: [{variant: 'requests', label: 'Requests'}],
+        },
       ],
     }),
   plugins: [
