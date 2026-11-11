@@ -299,12 +299,13 @@ const config = {
         darkTheme: darkCodeTheme,
         additionalLanguages: ['php', 'ini', 'json'],
       },
-      // Code samples on the generated API reference pages (docusaurus-theme-openapi-docs)
+      // Code samples on the generated API reference pages (docusaurus-theme-openapi-docs). The Joomla samples
+      // (x-codeSamples, see scripts/openapi-code-samples.js) are shown first under PHP and JavaScript.
       languageTabs: [
-        {highlight: 'php', language: 'php', logoClass: 'php', variant: 'guzzle'},
         {highlight: 'bash', language: 'curl', logoClass: 'curl'},
-        {highlight: 'javascript', language: 'javascript', logoClass: 'javascript', variant: 'fetch'},
-        {highlight: 'python', language: 'python', logoClass: 'python', variant: 'requests'},
+        {highlight: 'php', language: 'php', logoClass: 'php', variant: 'guzzle', variants: ['guzzle']},
+        {highlight: 'javascript', language: 'javascript', logoClass: 'javascript', variant: 'fetch', variants: ['fetch']},
+        {highlight: 'python', language: 'python', logoClass: 'python', variant: 'requests', variants: ['requests']},
       ],
     }),
   plugins: [
@@ -367,8 +368,8 @@ const config = {
       configureWebpack: () => ({resolve: {fallback: {path: require.resolve('path-browserify')}}}),
     }),
     [
-      // Pages per operation of the Web Services API, generated from static/openapi/joomla-6.2.0.json
-      // with `npx docusaurus gen-api-docs all` into api-reference/ (not committed).
+      // Pages per operation of the Web Services API, generated with `npm run gen-api-docs` into
+      // api-reference/ (not committed), from static/openapi/joomla-6.2.0.json plus Joomla code samples.
       'content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
       ({
@@ -386,7 +387,8 @@ const config = {
         docsPluginId: 'api-reference',
         config: {
           joomla: {
-            specPath: 'static/openapi/joomla-6.2.0.json',
+            // static/openapi/joomla-6.2.0.json with x-codeSamples added by scripts/openapi-code-samples.js
+            specPath: 'build-openapi/joomla-6.2.0.json',
             outputDir: 'api-reference',
             downloadUrl: '/openapi/joomla-6.2.0.json',
             sidebarOptions: {

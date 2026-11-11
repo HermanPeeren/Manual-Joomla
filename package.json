@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
+    "gen-api-docs": "node scripts/openapi-code-samples.js static/openapi/joomla-6.2.0.json build-openapi/joomla-6.2.0.json && docusaurus clean-api-docs all && docusaurus gen-api-docs all",
     "start": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
